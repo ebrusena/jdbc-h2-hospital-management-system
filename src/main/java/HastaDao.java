@@ -11,7 +11,7 @@ public class HastaDao {
     public boolean hastaEkle(Hasta hasta) {
         String sql = "INSERT INTO hastalar (tc_no, ad_soyad, bolum, yas) VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseHelper.getConnection();
+        try (Connection conn = DatabaseHelper.getConnection(); //Dışarıdan bir Hasta nesnesi alır. PreparedStatement ile ? işaretlerinin yerini doldurur ve executeUpdate() çalıştırarak yeni kaydı veritabanına ekler.
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, hasta.getTcNo());
@@ -90,4 +90,57 @@ public class HastaDao {
             return false;
         }
     }
+    // 5. READ - TC Kimlik Numarasına Göre Tek Bir Hasta Getirme
+    public Hasta hastaGetirByTc(String tcNo) {
+        String sql = "SELECT * FROM hastalar WHERE tc_no = ?";
+
+        try (Connection conn = DatabaseHelper.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, tcNo);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Hasta(
+                            rs.getInt("id"),
+                            rs.getString("tc_no"),
+                            rs.getString("ad_soyad"),
+                            rs.getString("bolum"),
+                            rs.getInt("yas")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("TC ile Hasta Ararken Hata: " + e.getMessage());
+        }
+        return null; // Hasta bulunamazsa null döner
+    }
+
+    // 6. READ - Poliklinik/Bölüme Göre Hastaları Filtreleme
+    public List<Hasta> hastalariGetirByBolum(String bolum) {
+        List<Hasta> liste = new ArrayList<>();
+        String sql = "SELECT * FROM hastalar WHERE UPPER(bolum) = UPPER(?) ORDER BY ad_soyad ASC";
+
+        try (Connection conn = DatabaseHelper.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, bolum);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    liste.add(new Hasta(
+                            rs.getInt("id"),
+                            rs.getString("tc_no"),
+                            rs.getString("ad_soyad"),
+                            rs.getString("bolum"),
+                            rs.getInt("yas")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Bölüme Göre Listelerken Hata: " + e.getMessage());
+        }
+        return liste;
+    }
+
 }
