@@ -5,35 +5,43 @@ import java.sql.Statement;
 
 public class DatabaseHelper {
 
-    // Veritabanı URL'si: Proje klasörünün içine 'hastanedb' adında bir veritabanı dosyası oluşturur.
-    private static final String DB_URL = "jdbc:h2:./hastanedb;DB_CLOSE_DELAY=-1";
-    private static final String DB_USER = "sa";
-    private static final String DB_PASSWORD = "";
+    // Proje ana dizininde hastanedb.mv.db adında gömülü (embedded) dosya oluşturur
 
-    // 1. Veritabanı Bağlantısını Getiren Metot
+    private static final String URL = "jdbc:h2:./hastanedb;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1";
+    private static final String USER = "sa";
+    private static final String PASSWORD = "";
+
+    // Veritabanı bağlantısı sağlayan metot
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    // 2. Tabloyu Otomatik Oluşturan Metot
+    // Uygulama başladığında tabloları otomatik oluşturan metot
     public static void createTables() {
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS hastalar (" +
+        String hastaSql = "CREATE TABLE IF NOT EXISTS hastalar (" +
                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                "tc_no VARCHAR(11) UNIQUE NOT NULL, " +
+                "tc_no VARCHAR(11) NOT NULL UNIQUE, " +
                 "ad_soyad VARCHAR(100) NOT NULL, " +
                 "bolum VARCHAR(50) NOT NULL, " +
                 "yas INT NOT NULL" +
                 ");";
 
+        String doktorSql = "CREATE TABLE IF NOT EXISTS doktorlar (" +
+                "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                "diploma_no VARCHAR(20) NOT NULL UNIQUE, " +
+                "ad_soyad VARCHAR(100) NOT NULL, " +
+                "uzmanlik_alani VARCHAR(50) NOT NULL" +
+                ");";
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // SQL sorgusunu çalıştırıyoruz
-            stmt.execute(createTableSQL);
-            System.out.println("-> Veritabanı tablosu hazır (hastalar).");
+            stmt.execute(hastaSql);
+            stmt.execute(doktorSql);
+            System.out.println("Veritabanı tabloları başarıyla kontrol edildi / oluşturuldu.");
 
         } catch (SQLException e) {
-            System.err.println("Tablo oluşturulurken hata oluştu: " + e.getMessage());
+            System.err.println("Tablolar oluşturulurken hata oluştu: " + e.getMessage());
         }
     }
 }
